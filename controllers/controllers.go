@@ -2,24 +2,29 @@ package controllers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/ilhamadikusuma31/golang-ecommerce/database"
 	"github.com/ilhamadikusuma31/golang-ecommerce/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
+
+var UserCollection *mongo.Collection = database.UserData(database.Client,"Users")
 
 func HashPassword(pw string) string {
 
 	return "tes"
 }
 
-// func VerifyPassword() (userpw string, givenpw string) (bool, string) {
+func VerifyPassword() (userpw string, givenpw string) (bool, string) {
 
-// }
+}
 
 func Signup() gin.HandlerFunc {
 	return func(c *gin.Context){
@@ -45,7 +50,7 @@ func Signup() gin.HandlerFunc {
 		//cek apakah email sudah ada di DB
 		count, err := UserCollection.CountDocuments(ctx, bson.M{"email":pengguna.Email})
 		if err!=nil{
-			log.panic(err)
+			log.Panic(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 			return
 		}
@@ -56,10 +61,10 @@ func Signup() gin.HandlerFunc {
 
 
 		//cek apakah HP sudah ada di DB
-		count, batal := UserCollection.CountDocuments(ctx, bson.M{"hp":pengguna.Hp})
-		defer batal()
+		count, err = UserCollection.CountDocuments(ctx, bson.M{"hp":pengguna.Hp})
+		defer cancel()
 		if err!=nil{
-			log.panic(err)
+			log.Panic(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 			return
 		}
@@ -106,7 +111,41 @@ func Signup() gin.HandlerFunc {
 }
 
 func Login() gin.HandlerFunc{
+	return func(c *gin.Context)  {
+		//membuat timeout
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
 
+		//manggil class user
+		var user models.User	
+
+		//tempelkan sesuai data request ke class
+		err := c.BindJSON(&user)
+		if err != nil{
+			c.JSON(http.StatusBadRequest, gin.H{"error":err})
+		} 
+
+		err = UserCollection.FindOne(ctx, bson.M{"email":user.Email}).Decode(&foundUser)
+		defer cancel()
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error":"uname atau password salah"})
+			return
+		}
+
+		PasswordIsValid, pesan :=VerifyPassword(*user.Password, *foundUser.Password)
+		defer cancel()
+
+		if !PasswordIsValid{
+			c.JSON(http.StatusInternalServerError, gin.H{"error":pesan})
+		}
+
+		//membuat token
+		token, refreshToken, _ := generate.TokenGenerator(*foundUser.Email,*foundUser.Nama_Depan, *foundUser.User_ID)
+		generator.UpdateAllTokens(token, refreshToken, foundUser.User_ID)
+		c.JSON(http.StatusFound, foundUser)
+
+	}
 }
 func ProductViewAdmin() gin.HandlerFunc {
 
