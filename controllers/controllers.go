@@ -13,17 +13,31 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var UserCollection *mongo.Collection = database.UserData(database.Client,"Users")
+var ProductCollection *mongo.Collection = database.ProdukData(database.Client, "Products")
+var Validate = validator.New()
 
 func HashPassword(pw string) string {
-
-	return "tes"
+	bytes, err := bcrypt.GenerateFromPassword([]byte(pw),14)
+	if err!=nil{
+		log.Panic(err)
+	}
+	return string(bytes)
 }
 
-func VerifyPassword() (userpw string, givenpw string) (bool, string) {
+func VerifyPassword(userPW string, givenPW string) (bool, string) {
+	valid := true
+	msg   := ""
+	err   := bcrypt.CompareHashAndPassword([]byte(givenPW), []byte(userPW))
+	if err!=nil{
+		msg = "uname atau pw salah"
+		valid = false
+	}
 
+	return valid, msg
 }
 
 func Signup() gin.HandlerFunc {
@@ -39,8 +53,7 @@ func Signup() gin.HandlerFunc {
 		}
 
 		//mem-validasi inputan sesuai dengan struct yang udah dibikin
-		validate := validator.New()
-		validationErr := validate.Struct(pengguna)
+		validationErr := Validate.Struct(pengguna)
 		if validationErr!=nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error":validationErr.Error()})
 			return
@@ -152,7 +165,45 @@ func ProductViewAdmin() gin.HandlerFunc {
 }
 
 func SearchProduct() gin.HandlerFunc{
+	return func(c *gin.Context)  {
+		var listProduk []models.Produk
 
+		//membuat timeout dengan context
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+
+		//mencari semua data produk
+		//bson.d => represntasi terurut berbentuk slice
+		data, err := ProductCollection.Find(ctx, bson.D{{}})
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, "ada sesuatu yang salah coba lagi nanti boskuh")
+			return
+		}
+
+
+		//semua data di pindah valuenya ke var listProduct
+		//nb: biar golang tau json
+		err = data.All(ctx, &listProduk)
+		if err!=nil{
+			log.Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+
+		//close data
+		defer data.Close(ctx)
+		if data.Err() == nil{
+			log.Println(err)
+			c.JSON(400, "ga valid")
+			return
+		}
+
+		defer cancel()
+		c.JSON(200, listProduk)
+		
+	}
 }
 
 func SearchProductByQuery() gin.HandlerFunc{
