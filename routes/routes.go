@@ -13,7 +13,7 @@ import (
 func main() {
 
 	port := "8080"
-	app := controllers.NewApplication(database.ProdukData(database.Client, "Products"), database.UserData(database.Client, "Users"))
+	app := controllers.AplikasiBaru(database.ProdukData(database.Client, "Products"), database.UserData(database.Client, "Users"))
 
 	router := gin.New()
 	routes.UserRoutes(router)
