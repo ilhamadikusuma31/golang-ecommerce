@@ -199,13 +199,63 @@ func SearchProduct() gin.HandlerFunc{
 			c.JSON(400, "ga valid")
 			return
 		}
-
 		defer cancel()
+
+		//feedback data nya untuk dilempar ke FE
 		c.JSON(200, listProduk)
 		
 	}
 }
 
 func SearchProductByQuery() gin.HandlerFunc{
+	return func(c *gin.Context)  {
+		var produkYangDicari []models.Produk
+		queryParam := c.Query("name")
 
+		if queryParam == " "{
+			log.Println("Query kosong")
+			c.Header("Content-Type", "application/json")
+			c.JSON(http.StatusNotFound, gin.H{"Error":"invalid indeks yang dicari"})
+			c.Abort()
+			return
+		}
+
+		//bikin timeout dengan context
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		//cari nama produk sesuai req dari user
+		data, err := ProductCollection.Find(ctx, bson.M{"nama_produk":bson.M{"$regex":queryParam}})
+
+
+		//kalo yang dicar gada yang sesuai
+		if err != nil{
+			c.JSON(404, "ada kesalaha ketika fetch data")
+			return
+		}
+		defer cancel()
+
+
+		//data ditempel ke var produkYangDicari
+		err = data.All(ctx, &produkYangDicari)
+		if err != nil{
+			log.Println(err)
+			c.JSON(400, "invalid")
+			return
+		}
+
+		//close data
+		defer data.Close(ctx)
+
+		//kalo ada error pas di close
+		if data.Err() != nil{
+			c.JSON(400, "permintaan invalid")
+			return
+		}
+		defer cancel()
+
+		//feedback data nya untuk dilempar ke FE
+		c.JSON(200, produkYangDicari)
+
+	}
 }

@@ -2,15 +2,15 @@ package controllers
 
 import "github.com/gin-gonic/gin"
 
-func TambahAlamat() gin.Handler {
+func TambahAlamat() gin.HandlerFunc {
 
 }
-func EditAlamatRumah() gin.Handler {
+func EditAlamatRumah() gin.HandlerFunc {
 
 }
-func EditAlamatKantor() gin.Handler {
+func EditAlamatKantor() gin.HandlerFunc {
 
 }
-func HapusAlamat() gin.Handler {
+func HapusAlamat() gin.HandlerFunc {
 
 }
