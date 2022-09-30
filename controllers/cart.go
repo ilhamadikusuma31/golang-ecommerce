@@ -9,6 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ilhamadikusuma31/golang-ecommerce/database"
+	"github.com/ilhamadikusuma31/golang-ecommerce/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -101,8 +103,71 @@ func (a *Aplikasi) HapusItem() gin.HandlerFunc{
 	}
 }
 func DapatkanItemDariKeranjang() gin.HandlerFunc{
+	return func(c *gin.Context)  {
+		
+		//tangkap id dari req
+		userQueryID := c.Query("id")
+	
 
+		//kalo id ga valid
+		if userQueryID == " "{
+			c.Header("Content-Type", "application/json")
+			c.JSON(http.StatusNotFound, gin.H{"error":"id ga valid"})
+			c.Abort()
+			return
+		}
+
+		//convert type dari hex biar dikenali golang
+		userID,_ := primitive.ObjectIDFromHex(userQueryID)
+		
+		//buat timeout
+		ctx, cancel:= context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		//cari user yang sesuai id
+		var user models.User
+		penampung := UserCollection.FindOne(ctx, bson.D{primitive.E{Key: "_id", Value: userID}})
+		err       := penampung.Decode(&user)		
+		if err != nil{
+			log.Println(err)
+			c.JSON(500, "tidak ada user yang ber id tersebut")
+			return
+		}	
+
+
+		//aggregate => ada di dokumentasi mongo
+		//match => nyari yang sesuai id
+		filter := bson.D{{Key: "$match" ,Value: bson.D{primitive.E{Key: "_id", Value: userID}}}}
+
+		//unwind => dipecah per object barangnya dari seseorang user
+		unwind := bson.D{{ Key: "$unwind", Value: bson.D{primitive.E{ Key:"path", Value: "keranjang_user" }} }}
+
+
+		//grouping
+		group := bson.D{{ Key: "$group", Value: primitive.E{Key: "_id", Value: "$_id"}}, {Key:"total",Value:bson.D{primitive.E{Key:"$sum",Value:"$keranjang_user.harga"}}} }
+		pointer, err := UserCollection.Aggregate(ctx, mongo.Pipeline{filter, unwind, group}) 
+		if err!=nil{
+			log.Println(err)
+		}
+
+		//data dilooping dan disimpan di var listing
+		var listing []bson.M
+		if err = pointer.All(ctx, &listing); err != nil{
+			log.Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		for _,j := range listing{
+			c.JSON(200,j["total"])
+			c.JSON(200,user.KeranjangUser)
+		}
+
+		ctx.Done()	
+	
+	}
+	
 }
+
 func BeliDariKeranjang() gin.HandlerFunc{
 	return func (c *gin.Context)  {
 		userQueryID := c.Query("userID")
