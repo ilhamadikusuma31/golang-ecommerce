@@ -26,7 +26,7 @@ type User struct{
 type Produk struct{
 	Produk_ID  		primitive.ObjectID   `bson:"_id"`
 	Nama_Produk 	*string              `json:"nama_produk"`
-	Harga 			*uint64              `json:"harga"`
+	Harga 			*uint64              `json:"harga"` 
 	Rating 			*uint8				 `json:"rating"`
 	Gambar 		    *string              `json:"gambar"`
 }
@@ -34,7 +34,7 @@ type Produk struct{
 type ProdukUser struct{
 	Produk_ID  		primitive.ObjectID   `bson:"_id"`
 	Nama_Produk 	*string              `json:"nama_produk"`
-	Harga 			int                  `json:"harga"`
+	Harga 			int                  `json:"harga" bson:"harga"`
 	Rating 			*uint8               `json:"rating"`
 	Gambar 		    *string              `json:"gambar"`
 }

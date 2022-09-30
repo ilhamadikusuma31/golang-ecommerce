@@ -43,9 +43,11 @@ func HapusAlamat() gin.HandlerFunc {
 		defer cancel()
 		
 		//cari data yang sesuai id yang di req user
+		//d => unordered
 		filter := bson.D{primitive.E{Key: "_id",Value: userID}}
 
 		//buat update-an datanya ditimpa dengan alamat kosong
+		//$set => ini untuk update dari mongo
 		update := bson.D{{ Key: "$set", Value: bson.D{primitive.E{Key: "alamat", Value: alamats}} }}
 
 		_,err = UserCollection.UpdateOne(ctx, filter, update)
