@@ -12,8 +12,31 @@ import (
 )
 
 func TambahAlamat() gin.HandlerFunc {
+	return func(c *gin.Context) {
+        userQueryID := c.Query("id")
+		if userQueryID == "" {
+			c.Header("Content-Type", "application/json")
+			c.JSON(http.StatusNotFound, gin.H{"error": "invalid id"})
+			c.Abort()
+			return
+		
+		userID, err := primitive.ObjectIDFromHex(queryUserID)
+		if err!= nil {
+			c.JSON(500,"internal server error")
+		}
 
-}
+		var alamats models.Alamat
+		alamats.Alamat_ID = primitive.NewObjectID()
+		if err = c.BindJSON(&alamats); err != nil {
+			c.JSON(http.StatusNotAcceptable, err.Error())
+		}
+
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+
+		filter := bson.D{{ Key: "$match", Value: bson.D{primitive.E{Key: "_id", Value: userID}} }}
+		unwind := bson.D{{ Key: "$unwind", Value: bson.D{primitive.E{Key: "path", Value:"$alamat"}} }}
+		group  	:= bson.D{{ Key: "$group", Value: bson.D{primitive.E{Key: "_id", Value: "$addres_id"}} }}
+}}
 func EditAlamatRumah() gin.HandlerFunc {
 
 }
