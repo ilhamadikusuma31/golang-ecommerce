@@ -7,7 +7,7 @@ import (
 	"github.com/ilhamadikusuma31/golang-ecommerce/tokens"
 )
 
-func Authentication() gin.HandlerFunc {
+func Autentikasi() gin.HandlerFunc {
 	return func(c *gin.Context){
 		clientToken := c.Request.Header.Get("token")
 		if clientToken == "" {
