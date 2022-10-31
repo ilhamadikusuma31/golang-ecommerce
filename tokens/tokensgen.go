@@ -58,7 +58,7 @@ func TokenGenerator(email string, namadepan string, namabelakang string, uid str
 
 }
 
-func ValidateToken(signedtoken string) (klaims *SignedDetails, pesan string){
+func ValidasiToken(signedtoken string) (klaims *SignedDetails, pesan string){
 	token, err:= jwt.ParseWithClaims(signedtoken, &SignedDetails{}, func(token *jwt.Token)(interface{}, error){
 		return []byte(SECRET_KEY), nil
 	})
