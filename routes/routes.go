@@ -26,7 +26,6 @@ func main() {
 	router.GET("/hapus-item", app.HapusItem())
 	router.GET("/keranjang-checkout", app.KeranjangCheckout())
 	router.GET("/beli-cepat", app.BeliCepat())
-	router.GET("/beli-cepat", app.BeliCepat())
 
 	//run
 	log.Fatal(router.Run(":"+port))

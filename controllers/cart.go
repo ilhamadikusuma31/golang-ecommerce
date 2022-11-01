@@ -102,7 +102,7 @@ func (a *Aplikasi) HapusItem() gin.HandlerFunc{
 
 	}
 }
-func DapatkanItemDariKeranjang() gin.HandlerFunc{
+func (a *Aplikasi) DapatkanItemDariKeranjang() gin.HandlerFunc{
 	return func(c *gin.Context)  {
 		
 		//tangkap id dari req
@@ -168,7 +168,7 @@ func DapatkanItemDariKeranjang() gin.HandlerFunc{
 	
 }
 
-func BeliDariKeranjang() gin.HandlerFunc{
+func (a *Aplikasi) BeliDariKeranjang() gin.HandlerFunc{
 	return func (c *gin.Context)  {
 		userQueryID := c.Query("userID")
 		if userQueryID == " "{
@@ -188,7 +188,7 @@ func BeliDariKeranjang() gin.HandlerFunc{
 
 	}
 }
-func BeliCepat() gin.HandlerFunc{
+func (a *Aplikasi) BeliCepat() gin.HandlerFunc{
 	return func (c *gin.Context)  {
 		produkQueryId := c.Query("produkID")
 		if produkQueryId == " "{
@@ -214,7 +214,7 @@ func BeliCepat() gin.HandlerFunc{
 		var ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		err = database.PembeliCepat(ctx, a.produkKoleksi, a.penggunaKoleksi, productID, userQueryID)
+		err = database.PembelianCepat(ctx, a.produkKoleksi, a.penggunaKoleksi, productID, userQueryID)
 
 		if err != nil{
 			c.JSON(http.StatusInternalServerError,err)
