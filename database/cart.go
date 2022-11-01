@@ -143,6 +143,44 @@ func BeliProdukDariKeranjang(ctx context.Context, prodKoleksi, userKoleksi *mong
 	return nil
 }
 
-func PembeliCepat()  {
-	
+func PembelianCepat(ctx context.Context, prodKoleksi, userKoleksi *mongo.Collection, produkID primitive.ObjectID ,userID string) error  {
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err!=nil {
+		log.Println(err)
+		return ErrUserIdIsNotValid
+	}
+
+	var productUser models.ProdukUser
+	var orders models.Pesanan
+
+	orders.Pesanan_ID = primitive.NewObjectID()
+	orders.Orderer_At = time.Now().Local()
+	orders.Keranjang_Pesanan = []models.ProdukUser{}
+	orders.Metode_Pembayaran.COD = true
+
+	err=prodKoleksi.FindOne(ctx, bson.D{primitive.E{Key: "_id", Value:produkID}}).Decode(&productUser)
+	if err!=nil {
+		log.Println(err)
+	}
+
+	orders.Harga = productUser.Harga
+
+	//nambah data pemesanan ke user
+	filter := bson.D{primitive.E{Key:"_id", Value:id}}
+	update := bson.D{{ Key: "$push", Value: orders }}
+	_,err  = userKoleksi.UpdateOne(ctx, filter, update)
+	if err!=nil {
+		log.Println(err)
+	}
+
+	//nambah data pemesanan
+	filter2 := bson.D{primitive.E{Key:"_id", Value: id}}
+	update2 := bson.M{"$push": bson.M{"pesanans.$[].list_pesanan": productUser}}
+	_, err = userKoleksi.UpdateOne(ctx, filter2, update2)
+	if err!=nil {
+		log.Println(err)
+	}
+
+
+	return nil
 }
