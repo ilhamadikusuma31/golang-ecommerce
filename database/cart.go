@@ -73,7 +73,7 @@ func HapusProdukDariKeranjang(ctx context.Context, prodKoleksi, userKoleksi *mon
 	return nil
 
 }
-func BeliProdukDariKeranjang(ctx context.Context, prodKoleksi, userKoleksi *mongo.Collection, produkId primitive.ObjectID, userID string) error   {
+func BeliProdukDariKeranjang(ctx context.Context, userKoleksi *mongo.Collection, userID string) error   {
 	
 	id, err := primitive.ObjectIDFromHex(userID)
 	if err!=nil {
@@ -180,7 +180,6 @@ func PembelianCepat(ctx context.Context, prodKoleksi, userKoleksi *mongo.Collect
 	if err!=nil {
 		log.Println(err)
 	}
-
 
 	return nil
 }

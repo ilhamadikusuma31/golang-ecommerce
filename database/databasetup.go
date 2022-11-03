@@ -40,7 +40,6 @@ func DBset() *mongo.Client  {
 var Client *mongo.Client = DBset()
 
 
-
 func UserData(client *mongo.Client, namaKoleksi string) *mongo.Collection {
 	var koleksi *mongo.Collection = client.Database("Ecommerce").Collection(namaKoleksi) //db: Ecommerce table:User
 	return koleksi
