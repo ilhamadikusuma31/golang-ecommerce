@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/ilhamadikusuma31/golang-ecommerce/database"
 	"github.com/ilhamadikusuma31/golang-ecommerce/models"
+	generate "github.com/ilhamadikusuma31/golang-ecommerce/tokens"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -130,7 +131,8 @@ func Login() gin.HandlerFunc{
 		defer cancel()
 
 		//manggil class user
-		var user models.User	
+		var user models.User
+		var foundUser models.User	
 
 		//tempelkan sesuai data request ke class
 		err := c.BindJSON(&user)
@@ -154,14 +156,30 @@ func Login() gin.HandlerFunc{
 		}
 
 		//membuat token
-		token, refreshToken, _ := generate.TokenGenerator(*foundUser.Email,*foundUser.Nama_Depan, *foundUser.User_ID)
-		generator.UpdateAllTokens(token, refreshToken, foundUser.User_ID)
+		token, refreshToken, _ := generate.TokenGenerator(*foundUser.Email,*foundUser.Nama_Depan,*foundUser.Nama_Belakang ,foundUser.User_ID)
+		generate.UpdateAllTokens(token, refreshToken, foundUser.User_ID)
 		c.JSON(http.StatusFound, foundUser)
 
 	}
 }
-func ProductViewAdmin() gin.HandlerFunc {
-
+func ProductViewerAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		var products models.Produk
+		defer cancel()
+		if err := c.BindJSON(&products); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		products.Produk_ID = primitive.NewObjectID()
+		_, anyerr := ProductCollection.InsertOne(ctx, products)
+		if anyerr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Not Created"})
+			return
+		}
+		defer cancel()
+		c.JSON(http.StatusOK, "Successfully added our Product Admin!!")
+	}
 }
 
 func SearchProduct() gin.HandlerFunc{
@@ -194,7 +212,7 @@ func SearchProduct() gin.HandlerFunc{
 
 		//close data
 		defer data.Close(ctx)
-		if data.Err() == nil{
+		if data.Err() != nil{
 			log.Println(err)
 			c.JSON(400, "ga valid")
 			return
